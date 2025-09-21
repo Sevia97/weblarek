@@ -5,6 +5,7 @@
     "module": "ESNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
+    "types": ["vite/client"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -22,5 +23,8 @@
     "noUncheckedSideEffectImports": true,
 
   },
-  "include": ["src"]
+  "include": [
+    "src/**/*",
+    "src/globals.d.ts"
+  ]
 }
