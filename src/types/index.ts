@@ -32,11 +32,7 @@ export interface IBuyerFormErrors {
 }
 
 // Данные для отправки заказа на сервер
-export interface IOrderData {
-  payment: TPayment;
-  email: string;
-  phone: string;
-  address: string;
+export interface IOrderData extends IBuyer {
   items: string[];
   total: number;
 }
