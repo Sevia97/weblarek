@@ -1,38 +1,40 @@
-import { EventEmitter, IEvents } from "../base/Events";
-import { IBuyer, TPayment, IBuyerFormErrors } from "../../types/index";
+import { IBuyer, TPayment, IBuyerModel, IBuyerFormErrors } from "../../types";
+import { Validators } from "../../utils/validators";
 
-// Интерфейс для модели данных покупателя
-export interface IBuyerModel extends IEvents {
-  setData(data: Partial<IBuyer>): void;
-  getData(): IBuyer;
-  clearData(): void;
-  validate(): IBuyerFormErrors;
-}
+export class BuyerModel implements IBuyerModel {
+  protected _payment: TPayment = null;
+  protected _email: string = '';
+  protected _phone: string = '';
+  protected _address: string = '';
+  private onDataChanged?: (data: IBuyer) => void;
 
-export class BuyerModel extends EventEmitter implements IBuyerModel {
-  protected _payment: TPayment;
-  protected _email: string;
-  protected _phone: string;
-  protected _address: string;
-
-  constructor() {
-    super();
-    this._payment = null;
-    this._email = '';
-    this._phone = '';
-    this._address = '';
-  }
-
-  // Обновляет данные покупателя (частично или полностью) и уведомляет подписчиков
   setData(data: Partial<IBuyer>): void {
-    if (data.payment !== undefined) this._payment = data.payment;
-    if (data.email !== undefined) this._email = data.email;
-    if (data.phone !== undefined) this._phone = data.phone;
-    if (data.address !== undefined) this._address = data.address;
-    this.emit('buyerDataChanged', this.getData());
+    if (!data) return;
+    
+    let changed = false;
+
+    if (data.payment !== undefined) {
+      this._payment = data.payment;
+      changed = true;
+    }
+    if (data.email !== undefined) {
+      this._email = data.email;
+      changed = true;
+    }
+    if (data.phone !== undefined) {
+      this._phone = data.phone;
+      changed = true;
+    }
+    if (data.address !== undefined) {
+      this._address = data.address;
+      changed = true;
+    }
+
+    if (changed) {
+      this.onDataChanged?.(this.getData());
+    }
   }
 
-  // Возвращает все данные покупателя
   getData(): IBuyer {
     return {
       payment: this._payment,
@@ -42,32 +44,43 @@ export class BuyerModel extends EventEmitter implements IBuyerModel {
     };
   }
 
-  // Сбрасывает все данные покупателя к значениям по умолчанию и уведомляет подписчиков
   clearData(): void {
     this._payment = null;
     this._email = '';
     this._phone = '';
     this._address = '';
-    this.emit('buyerDataChanged', this.getData());
+    this.onDataChanged?.(this.getData());
   }
 
-  // Проверяет валидность данных
   validate(): IBuyerFormErrors {
     const errors: IBuyerFormErrors = {};
 
-    if (this._payment === null) {
+    if (!Validators.validatePayment(this._payment)) {
       errors.payment = 'Не выбран способ оплаты';
     }
+
     if (!this._email.trim()) {
       errors.email = 'Не указан email';
+    } else if (!Validators.validateEmail(this._email)) {
+      errors.email = 'Некорректный формат email';
     }
+
     if (!this._phone.trim()) {
       errors.phone = 'Не указан телефон';
+    } else if (!Validators.validatePhone(this._phone)) {
+      errors.phone = 'Формат телефона: +7 (XXX) XXX-XX-XX';
     }
+
     if (!this._address.trim()) {
       errors.address = 'Не указан адрес';
+    } else if (!Validators.validateAddress(this._address)) {
+      errors.address = 'Адрес должен содержать не менее 5 символов';
     }
 
     return errors;
+  }
+
+  setDataChangedCallback(callback: (data: IBuyer) => void): void {
+    this.onDataChanged = callback;
   }
 }
