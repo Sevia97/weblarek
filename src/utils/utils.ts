@@ -92,9 +92,7 @@ export function getElementData<T extends Record<string, unknown>>(el: HTMLElemen
     return data as T;
 }
 
-/**
- * Проверка на простой объект
- */
+//Проверка на простой объект
 export function isPlainObject(obj: unknown): obj is object {
     const prototype = Object.getPrototypeOf(obj);
     return  prototype === Object.getPrototypeOf({}) ||

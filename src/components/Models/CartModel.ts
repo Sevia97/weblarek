@@ -1,8 +1,13 @@
 import { IProduct, ICartModel } from "../../types";
+import { EventEmitter } from "../base/Events";
 
 export class CartModel implements ICartModel {
   private _items: IProduct[] = [];
-  private onCartChanged?: (items: IProduct[]) => void;
+  protected events: EventEmitter;
+
+  constructor(events: EventEmitter) {
+    this.events = events;
+  }
 
   getItems(): IProduct[] {
     return this._items;
@@ -10,17 +15,17 @@ export class CartModel implements ICartModel {
 
   addItem(item: IProduct): void {
     this._items.push(item);
-    this.onCartChanged?.(this._items);
+    this.events.emit('basket:changed', { items: this._items });
   }
 
   removeItem(id: string): void {
     this._items = this._items.filter(item => item.id !== id);
-    this.onCartChanged?.(this._items);
+    this.events.emit('basket:changed', { items: this._items });
   }
 
   clearCart(): void {
     this._items = [];
-    this.onCartChanged?.(this._items);
+    this.events.emit('basket:changed', { items: this._items });
   }
 
   getTotal(): number {
@@ -33,9 +38,5 @@ export class CartModel implements ICartModel {
 
   checkInCart(id: string): boolean {
     return this._items.some(item => item.id === id);
-  }
-
-  setCartChangedCallback(callback: (items: IProduct[]) => void): void {
-    this.onCartChanged = callback;
   }
 }

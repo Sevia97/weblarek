@@ -1,15 +1,18 @@
 import { IProduct, IProductModel } from "../../types";
+import { EventEmitter } from "../base/Events";
 
 export class ProductModel implements IProductModel {
   private _items: IProduct[] = [];
   private _selectedItem: IProduct | null = null;
+  protected events: EventEmitter;
 
-  private onItemsChanged?: (items: IProduct[]) => void;
-  private onSelectedItemChanged?: (item: IProduct | null) => void;
+  constructor(events: EventEmitter) {
+    this.events = events;
+  }
 
   setItems(data: IProduct[]): void {
     this._items = data;
-    this.onItemsChanged?.(this._items);
+    this.events.emit('items:changed', { items: this._items });
   }
 
   getItems(): IProduct[] {
@@ -22,18 +25,10 @@ export class ProductModel implements IProductModel {
 
   setSelectedItem(item: IProduct): void {
     this._selectedItem = item;
-    this.onSelectedItemChanged?.(this._selectedItem);
+    this.events.emit('item:selected', { item: this._selectedItem });
   }
 
   getSelectedItem(): IProduct | null {
     return this._selectedItem;
-  }
-
-  setItemsChangedCallback(callback: (items: IProduct[]) => void): void {
-    this.onItemsChanged = callback;
-  }
-
-  setSelectedItemChangedCallback(callback: (item: IProduct | null) => void): void {
-    this.onSelectedItemChanged = callback;
   }
 }

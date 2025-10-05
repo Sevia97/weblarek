@@ -1,4 +1,5 @@
 import { IBuyer, TPayment, IBuyerModel, IBuyerFormErrors } from "../../types";
+import { EventEmitter } from "../base/Events";
 import { Validators } from "../../utils/validators";
 
 export class BuyerModel implements IBuyerModel {
@@ -6,7 +7,11 @@ export class BuyerModel implements IBuyerModel {
   protected _email: string = '';
   protected _phone: string = '';
   protected _address: string = '';
-  private onDataChanged?: (data: IBuyer) => void;
+  protected events: EventEmitter;
+
+  constructor(events: EventEmitter) {
+    this.events = events;
+  }
 
   setData(data: Partial<IBuyer>): void {
     if (!data) return;
@@ -22,7 +27,7 @@ export class BuyerModel implements IBuyerModel {
       changed = true;
     }
     if (data.phone !== undefined) {
-      this._phone = data.phone;
+      this._phone = Validators.formatPhone(data.phone);
       changed = true;
     }
     if (data.address !== undefined) {
@@ -31,7 +36,7 @@ export class BuyerModel implements IBuyerModel {
     }
 
     if (changed) {
-      this.onDataChanged?.(this.getData());
+      // Данные обновлены
     }
   }
 
@@ -49,7 +54,6 @@ export class BuyerModel implements IBuyerModel {
     this._email = '';
     this._phone = '';
     this._address = '';
-    this.onDataChanged?.(this.getData());
   }
 
   validate(): IBuyerFormErrors {
@@ -68,7 +72,7 @@ export class BuyerModel implements IBuyerModel {
     if (!this._phone.trim()) {
       errors.phone = 'Не указан телефон';
     } else if (!Validators.validatePhone(this._phone)) {
-      errors.phone = 'Формат телефона: +7 (XXX) XXX-XX-XX';
+      errors.phone = 'Формат телефона: +7 XXX XXX-XX-XX или 8 XXX XXX-XX-XX';
     }
 
     if (!this._address.trim()) {
@@ -80,7 +84,37 @@ export class BuyerModel implements IBuyerModel {
     return errors;
   }
 
-  setDataChangedCallback(callback: (data: IBuyer) => void): void {
-    this.onDataChanged = callback;
+  validateOrder(): IBuyerFormErrors {
+    const errors: IBuyerFormErrors = {};
+
+    if (!Validators.validatePayment(this._payment)) {
+      errors.payment = 'Не выбран способ оплаты';
+    }
+
+    if (!this._address.trim()) {
+      errors.address = 'Не указан адрес';
+    } else if (!Validators.validateAddress(this._address)) {
+      errors.address = 'Адрес должен содержать не менее 5 символов';
+    }
+
+    return errors;
+  }
+
+  validateContacts(): IBuyerFormErrors {
+    const errors: IBuyerFormErrors = {};
+
+    if (!this._email.trim()) {
+      errors.email = 'Не указан email';
+    } else if (!Validators.validateEmail(this._email)) {
+      errors.email = 'Некорректный формат email';
+    }
+
+    if (!this._phone.trim()) {
+      errors.phone = 'Не указан телефон';
+    } else if (!Validators.validatePhone(this._phone)) {
+      errors.phone = 'Формат телефона: +7 XXX XXX-XX-XX или 8 XXX XXX-XX-XX';
+    }
+
+    return errors;
   }
 }

@@ -1,13 +1,13 @@
 import { FormView } from './FormView';
-import { IBuyer, IBuyerFormErrors } from '../../types';
+import { IBuyer } from '../../types';
+import { EventEmitter } from '../base/Events';
 
 export class OrderFormView extends FormView<IBuyer> {
-  private onSubmitCallback?: (data: IBuyer) => void;
   private _address: HTMLInputElement;
   private _paymentButtons: NodeListOf<HTMLButtonElement>;
 
-  constructor(container: HTMLFormElement) {
-    super(container);
+  constructor(container: HTMLFormElement, events: EventEmitter) {
+    super(container, events);
     
     this._address = this.ensureElement<HTMLInputElement>('input[name="address"]');
     this._paymentButtons = container.querySelectorAll('.button_alt');
@@ -19,23 +19,10 @@ export class OrderFormView extends FormView<IBuyer> {
     });
 
     this._address.addEventListener('input', () => {
-      this.validateForm();
+      this.handleInputChange();
     });
-  }
 
-  validate(): IBuyerFormErrors {
-    const errors: IBuyerFormErrors = {};
-
-    if (!this._address.value.trim()) {
-      errors.address = 'Не указан адрес';
-    }
-
-    const selectedPayment = this.container.querySelector('.button_alt-active');
-    if (!selectedPayment) {
-      errors.payment = 'Не выбран способ оплаты';
-    }
-
-    return errors;
+    // Убираем автоматическую подписку на валидацию
   }
 
   private handlePaymentSelect(button: HTMLButtonElement): void {
@@ -43,7 +30,14 @@ export class OrderFormView extends FormView<IBuyer> {
       btn.classList.remove('button_alt-active');
     });
     button.classList.add('button_alt-active');
-    this.validateForm();
+    
+    this.events.emit('order:change', { 
+      payment: button.getAttribute('name') === 'card' ? 'online' : 'offline' 
+    });
+  }
+
+  private handleInputChange(): void {
+    this.events.emit('order:change', { address: this._address.value });
   }
 
   getFormData(): IBuyer {
@@ -55,36 +49,22 @@ export class OrderFormView extends FormView<IBuyer> {
       payment = buttonName === 'card' ? 'online' : buttonName === 'cash' ? 'offline' : null;
     }
     
-    const formData = {
+    return {
       payment,
       address: this._address.value,
       email: '',
       phone: ''
     };
-
-    return formData;
   }
 
-  onSubmit(callback: (data: IBuyer) => void): void {
-    this.onSubmitCallback = callback;
-  }
-
-  protected validateForm(): void {
-    const errors = this.validate();
-    this.setSubmitDisabled(Object.keys(errors).length > 0);
-  }
-
-  // Переопределяем обработчик отправки формы
   protected setupSubmitHandler(): void {
     this._submitButton.addEventListener('click', (event: Event) => {
       event.preventDefault();
-      const errors = this.validate();
-      if (Object.keys(errors).length === 0) {
-        const formData = this.getFormData();
-        this.onSubmitCallback?.(formData);
-      } else {
-        this.setErrors(errors);
-      }
+      this.events.emit('order:submit', this.getFormData());
     });
+  }
+
+  protected validate(): Record<string, string | undefined> {
+    return {};
   }
 }

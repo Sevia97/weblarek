@@ -1,15 +1,17 @@
 import { CardView } from './CardView';
 import { IProduct } from '../../types';
+import { CDN_URL } from '../../utils/constants';
+import { EventEmitter } from '../base/Events';
 
 export class PreviewCardView extends CardView {
-  private onBuyCallback?: (productId: string) => void;
-  private onRemoveCallback?: (productId: string) => void;
+  private _currentProductId: string | null = null;
   private _description: HTMLElement;
   protected _button: HTMLButtonElement;
-  private _currentProductId: string | null = null;
+  protected events: EventEmitter;
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, events: EventEmitter) {
     super(container);
+    this.events = events;
     this._description = this.ensureElement<HTMLElement>('.card__text');
     this._button = this.ensureElement<HTMLButtonElement>('.card__button');
 
@@ -22,7 +24,9 @@ export class PreviewCardView extends CardView {
     this._currentProductId = data.id;
     this.setTitle(data.title);
     this.setPrice(data.price);
-    this.setCardImage(data.image, data.title);
+    
+    const imageUrl = data.image.startsWith('http') ? data.image : `${CDN_URL}/${data.image}`;
+    this.setCardImage(imageUrl, data.title);
     this.setCategory(data.category);
     this.setDescription(data.description);
     
@@ -56,22 +60,13 @@ export class PreviewCardView extends CardView {
     this.setDisabled(this._button, state);
   }
 
-  onBuy(callback: (productId: string) => void): void {
-    this.onBuyCallback = callback;
-  }
-
-  onRemove(callback: (productId: string) => void): void {
-    this.onRemoveCallback = callback;
-  }
-
   protected handleButtonClick(): void {
     if (!this._currentProductId) return;
     
     const buttonText = this._button.textContent;
-    if (buttonText === 'Удалить из корзины') {
-      this.onRemoveCallback?.(this._currentProductId);
-    } else {
-      this.onBuyCallback?.(this._currentProductId);
-    }
+    this.events.emit('card:action', { 
+      productId: this._currentProductId,
+      action: buttonText === 'Удалить из корзины' ? 'remove' : 'add'
+    });
   }
 }

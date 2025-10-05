@@ -1,18 +1,22 @@
 import { CardView } from './CardView';
 import { IProduct } from '../../types';
+import { CDN_URL } from '../../utils/constants';
+import { EventEmitter } from '../base/Events';
 
 export class CatalogCardView extends CardView {
-  private product: IProduct | null = null;
+  protected events: EventEmitter;
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, events: EventEmitter) {
     super(container);
+    this.events = events;
   }
 
   render(data: IProduct): HTMLElement {
-    this.product = data;
     this.setTitle(data.title);
     this.setPrice(data.price);
-    this.setCardImage(data.image, data.title);
+    
+    const imageUrl = data.image.startsWith('http') ? data.image : `${CDN_URL}/${data.image}`;
+    this.setCardImage(imageUrl, data.title);
     this.setCategory(data.category);
     
     return this.container;

@@ -96,8 +96,6 @@ export interface IProductModel {
   getItem(id: string): IProduct | null;
   setSelectedItem(item: IProduct): void;
   getSelectedItem(): IProduct | null;
-  setItemsChangedCallback(callback: (items: IProduct[]) => void): void;
-  setSelectedItemChangedCallback(callback: (item: IProduct | null) => void): void;
 }
 
 export interface ICartModel {
@@ -108,7 +106,6 @@ export interface ICartModel {
   getTotal(): number;
   getCount(): number;
   checkInCart(id: string): boolean;
-  setCartChangedCallback(callback: (items: IProduct[]) => void): void;
 }
 
 export interface IBuyerModel {
@@ -116,7 +113,6 @@ export interface IBuyerModel {
   getData(): IBuyer;
   clearData(): void;
   validate(): IBuyerFormErrors;
-  setDataChangedCallback(callback: (data: IBuyer) => void): void;
 }
 
 // Интерфейсы представлений с колбэками вместо EventEmitter
