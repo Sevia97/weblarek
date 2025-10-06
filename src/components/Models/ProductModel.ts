@@ -1,3 +1,4 @@
+// components/models/ProductModel.ts
 import { IProduct, IProductModel } from "../../types";
 import { EventEmitter } from "../base/Events";
 

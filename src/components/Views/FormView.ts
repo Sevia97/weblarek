@@ -1,8 +1,7 @@
 import { View } from './View';
-import { IFormView } from '../../types';
 import { EventEmitter } from '../base/Events';
 
-export abstract class FormView<T extends Record<string, any>> extends View<T> implements IFormView<T> {
+export abstract class FormView extends View {
   protected _submitButton: HTMLButtonElement;
   protected _errors: HTMLElement;
   protected events: EventEmitter;
@@ -20,16 +19,11 @@ export abstract class FormView<T extends Record<string, any>> extends View<T> im
     this.setSubmitDisabled(true);
   }
 
-  getFormData(): T {
-    const formData = new FormData(this.container as HTMLFormElement);
-    return Object.fromEntries(formData.entries()) as T;
-  }
-
-  setFormData(data: Partial<T>): void {
+  setFormData(data: Record<string, any>): void {
     Object.keys(data).forEach(key => {
       const element = this.container.querySelector(`[name="${key}"]`) as HTMLInputElement;
-      if (element && data[key as keyof T] !== undefined) {
-        element.value = data[key as keyof T] as string;
+      if (element && data[key] !== undefined) {
+        element.value = data[key] as string;
       }
     });
   }
@@ -61,5 +55,4 @@ export abstract class FormView<T extends Record<string, any>> extends View<T> im
   }
 
   protected abstract setupSubmitHandler(): void;
-  protected abstract validate(): Record<string, string | undefined>;
 }

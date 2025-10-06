@@ -1,3 +1,5 @@
+import { EventEmitter } from '../components/base/Events';
+
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
 export interface IApi {
@@ -59,13 +61,10 @@ export interface ICardView<T = any> extends IView<T> {
   setPrice(price: number | null): void;
   setCardImage(src: string, alt?: string): void;
   setCategory(category: string): void;
-  setButtonText(text: string): void; 
-  setButtonDisabled(state: boolean): void;
 }
 
-export interface IFormView<T extends Record<string, any>> extends IView<T> {
-  getFormData(): T;
-  setFormData(data: Partial<T>): void;
+export interface IFormView extends IView {
+  setFormData(data: Record<string, any>): void;
   clearForm(): void;
   setErrors(errors: Record<string, string | undefined>): void;
   clearErrors(): void;
@@ -85,8 +84,8 @@ export interface ICardViewConstructor {
   new (container: HTMLElement): ICardView;
 }
 
-export interface IFormViewConstructor<T extends Record<string, any>> {
-  new (container: HTMLFormElement): IFormView<T>;
+export interface IFormViewConstructor {
+  new (container: HTMLFormElement, events: EventEmitter): IFormView;
 }
 
 // Интерфейсы моделей (без наследования от IEventEmitter)
@@ -117,9 +116,8 @@ export interface IBuyerModel {
 
 // Интерфейсы представлений с колбэками вместо EventEmitter
 export interface ICatalogView {
-  setItems(products: IProduct[]): void;
   clear(): void;
-  onCardSelect(callback: (product: IProduct) => void): void;
+  addCard(cardElement: HTMLElement): void;
 }
 
 export interface IPreviewCardView {
@@ -131,6 +129,7 @@ export interface IPreviewCardView {
 
 export interface ICartCardView {
   render(product: IProduct): HTMLElement;
+  setIndex(index: number): void;
   onRemove(callback: (productId: string) => void): void;
 }
 
@@ -153,13 +152,13 @@ export interface IModalView {
 export interface IOrderFormView {
   clearForm(): void;
   setFormData(data: Partial<IBuyer>): void;
-  onSubmit(callback: (data: IBuyer) => void): void;
+  onSubmit(callback: () => void): void;
 }
 
 export interface IContactFormView {
   clearForm(): void;
   setFormData(data: Partial<IBuyer>): void;
-  onSubmit(callback: (data: IBuyer) => void): void;
+  onSubmit(callback: () => void): void;
 }
 
 export interface ISuccessView {

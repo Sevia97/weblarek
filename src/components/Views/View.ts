@@ -1,7 +1,7 @@
 import { Component } from '../base/Component';
 import { IView } from '../../types';
 
-export abstract class View<T> extends Component<T> implements IView<T> {
+export abstract class View<T = any> extends Component<T> implements IView<T> {
   getContent(): HTMLElement {
     return this.container;
   }
@@ -37,6 +37,16 @@ export abstract class View<T> extends Component<T> implements IView<T> {
   }
 
   setImage(element: HTMLImageElement, src: string, alt?: string): void {
-    super.setImage(element, src, alt);
+    if (element) {
+      element.src = src;
+      if (alt) {
+        element.alt = alt;
+      }
+    }
+  }
+
+  render(data?: Partial<T>): HTMLElement {
+    Object.assign(this as object, data ?? {});
+    return this.container;
   }
 }

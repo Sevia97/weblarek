@@ -1,3 +1,4 @@
+// components/models/BuyerModel.ts
 import { IBuyer, TPayment, IBuyerModel, IBuyerFormErrors } from "../../types";
 import { EventEmitter } from "../base/Events";
 import { Validators } from "../../utils/validators";
@@ -36,7 +37,8 @@ export class BuyerModel implements IBuyerModel {
     }
 
     if (changed) {
-      // Данные обновлены
+      //ДОБАВЛЕНО: автоматически валидируем при каждом изменении данных
+      this.validateAndEmit();
     }
   }
 
@@ -116,5 +118,14 @@ export class BuyerModel implements IBuyerModel {
     }
 
     return errors;
+  }
+
+  private validateAndEmit(): void {
+    const orderErrors = this.validateOrder();
+    const contactErrors = this.validateContacts();
+    
+    //Эмитим события валидации для каждой формы
+    this.events.emit('order:validate', orderErrors);
+    this.events.emit('contacts:validate', contactErrors);
   }
 }

@@ -1,3 +1,4 @@
+// main.ts
 import './scss/styles.scss';
 import { Api } from './components/base/Api';
 import { ApiService } from './components/Services/ApiService';
@@ -71,7 +72,6 @@ async function initializeApp(): Promise<void> {
 
 // Обработка событий каталога
 events.on('items:changed', (data: { items: IProduct[] }) => {
-  catalogView.setItems(data.items);
   renderCatalogItems(data.items);
 });
 
@@ -128,8 +128,6 @@ events.on('basket:submit', () => {
     payment: currentData.payment || null
   });
   
-  updateOrderSubmitButton();
-  
   modalView.setContent(orderFormView.getContent());
   modalView.open();
 });
@@ -137,21 +135,11 @@ events.on('basket:submit', () => {
 // Обработка событий заказа
 events.on('order:change', (data: Partial<IBuyer>) => {
   buyerModel.setData(data);
-  updateOrderSubmitButton();
+  // Валидация выполняется автоматически в BuyerModel.setData()
 });
 
-events.on('order:submit', (data: IBuyer) => {
-  const errors = buyerModel.validateOrder();
-  if (Object.keys(errors).length > 0) {
-    orderFormView.setErrors(errors);
-    return;
-  }
-
-  buyerModel.setData({
-    payment: data.payment,
-    address: data.address
-  });
-
+events.on('order:submit', () => {
+  // Валидация уже выполнена в модели, кнопка заблокирована при ошибках
   contactFormView.clearForm();
   contactFormView.clearErrors();
   const currentData = buyerModel.getData();
@@ -161,37 +149,26 @@ events.on('order:submit', (data: IBuyer) => {
     phone: currentData.phone || ''
   });
   
-  updateContactsSubmitButton();
-  
   modalView.setContent(contactFormView.getContent());
   modalView.open();
 });
 
-events.on('contacts:submit', async (data: IBuyer) => {
-  const errors = buyerModel.validateContacts();
-  if (Object.keys(errors).length > 0) {
-    contactFormView.setErrors(errors);
-    return;
-  }
-
-  buyerModel.setData({
-    email: data.email,
-    phone: data.phone
-  });
-
-  const completeData = buyerModel.getData();
+events.on('contacts:submit', async () => {
+  // Валидация уже выполнена в модели, кнопка заблокирована при ошибках
   
+  // Финальная проверка всех данных
   const finalErrors = buyerModel.validate();
   if (Object.keys(finalErrors).length > 0) {
     console.error('Не все данные заполнены корректно:', finalErrors);
     return;
   }
 
+  const currentData = buyerModel.getData();
   const orderData = {
-    payment: completeData.payment,
-    email: completeData.email,
-    phone: completeData.phone,
-    address: completeData.address,
+    payment: currentData.payment,
+    email: currentData.email,
+    phone: currentData.phone,
+    address: currentData.address,
     items: cartModel.getItems().map(item => item.id),
     total: cartModel.getTotal()
   };
@@ -217,48 +194,34 @@ events.on('success:close', () => {
 });
 
 events.on('basket:click', () => {
-  const modalContainer = modalView.getContent().closest('.modal');
-  if (modalContainer) {
-    cartView.setModalContainer(modalContainer as HTMLElement);
-  }
-  
   modalView.setContent(cartView.getContent());
   modalView.open();
 });
 
-// Функции для обновления состояния кнопок
-function updateOrderSubmitButton(): void {
-  const data = buyerModel.getData();
-  const isPaymentSelected = data.payment !== null;
-  const isAddressValid = data.address && data.address.trim().length >= 5;
-  const isFormValid = isPaymentSelected && isAddressValid;
-  
-  orderFormView.setSubmitDisabled(!isFormValid);
-}
-
-function updateContactsSubmitButton(): void {
-  const data = buyerModel.getData();
-  
-  const isEmailValid = data.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email);
-  
-  const phoneRegex = /^(\+7|7|8)?[\s\-]?\(?[0-9]{3}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$/;
-  const cleanPhone = data.phone ? data.phone.replace(/[^\d+]/g, '') : '';
-  const digitCount = cleanPhone.replace('+', '').length;
-  const isPhoneValid = data.phone && phoneRegex.test(data.phone) && (digitCount === 10 || digitCount === 11);
-  
-  const isFormValid = isEmailValid && isPhoneValid;
-  
-  contactFormView.setSubmitDisabled(!isFormValid);
-}
-
 // Обработчик изменений в контактных данных
 events.on('contacts:change', (data: Partial<IBuyer>) => {
   buyerModel.setData(data);
-  updateContactsSubmitButton();
+});
+
+// Обработчики валидации из модели
+events.on('order:validate', (errors: any) => {
+  orderFormView.setErrors(errors);
+  // Блокируем кнопку, если есть ошибки
+  const hasErrors = Object.keys(errors).length > 0;
+  orderFormView.setSubmitDisabled(hasErrors);
+});
+
+events.on('contacts:validate', (errors: any) => {
+  contactFormView.setErrors(errors);
+  // Блокируем кнопку, если есть ошибки
+  const hasErrors = Object.keys(errors).length > 0;
+  contactFormView.setSubmitDisabled(hasErrors);
 });
 
 // Функции рендеринга
 function renderCatalogItems(products: IProduct[]): void {
+  catalogView.clear();
+  
   products.forEach((product) => {
     try {
       const template = document.querySelector('#card-catalog') as HTMLTemplateElement;
@@ -270,7 +233,7 @@ function renderCatalogItems(products: IProduct[]): void {
       if (cardContainer) {
         const cardView = new CatalogCardView(cardContainer, events);
         cardView.render(product);
-        catalogView.addCard(cardContainer, product);
+        catalogView.addCard(cardContainer);
       }
     } catch (error) {
       console.error('Error rendering catalog card:', error, product);
@@ -290,7 +253,8 @@ function renderCartItems(products: IProduct[]): void {
       if (cardContainer) {
         const cardView = new CartCardView(cardContainer, events);
         cardView.render(product);
-        cartView.addCard(cardContainer, index);
+        cardView.setIndex(index);
+        cartView.addCard(cardContainer);
       }
     } catch (error) {
       console.error('Error rendering cart card:', error, product);

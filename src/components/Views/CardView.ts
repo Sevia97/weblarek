@@ -49,14 +49,4 @@ export abstract class CardView extends View<IProduct> implements ICardView<IProd
       }
     }
   }
-
-  setButtonText(text: string): void {
-    // Пустая реализация по умолчанию
-  }
-
-  setButtonDisabled(state: boolean): void {
-    // Пустая реализация по умолчанию
-  }
-
-  protected abstract handleButtonClick(): void;
 }

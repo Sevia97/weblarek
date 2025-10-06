@@ -6,11 +6,13 @@ export class CartCardView extends CardView {
   protected _button: HTMLButtonElement;
   protected events: EventEmitter;
   private _currentProductId: string | null = null;
+  private _indexElement: HTMLElement | null;
 
   constructor(container: HTMLElement, events: EventEmitter) {
     super(container);
     this.events = events;
     this._button = this.ensureElement<HTMLButtonElement>('.card__button');
+    this._indexElement = this.container.querySelector('.basket__item-index');
 
     if (this._button) {
       this._button.addEventListener('click', () => {
@@ -26,6 +28,12 @@ export class CartCardView extends CardView {
     this.setButtonText('Удалить');
     
     return this.container;
+  }
+
+  setIndex(index: number): void {
+    if (this._indexElement) {
+      this.setText(this._indexElement, String(index + 1));
+    }
   }
 
   setButtonText(text: string): void {

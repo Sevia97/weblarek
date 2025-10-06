@@ -29,36 +29,22 @@ export class ModalView extends View<void> {
         this.close();
       }
     });
-
-    window.addEventListener('resize', () => {
-      if (this._isOpen) {
-        this.handleResize();
-      }
-    });
   }
 
   open(): void {
     this.container.classList.add('modal_active');
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
     this._isOpen = true;
     
-    this._content.style.overflowY = 'visible';
-    this._content.style.maxHeight = 'none';
-    
-    setTimeout(() => {
-      this.events.emit('modal:open');
-    }, 10);
+    this.events.emit('modal:open');
   }
 
   close(): void {
     if (!this._isOpen) return;
     
     this.container.classList.remove('modal_active');
-    document.body.style.overflow = 'auto';
+    document.body.classList.remove('modal-open');
     this._isOpen = false;
-    
-    this._content.style.overflowY = 'visible';
-    this._content.style.maxHeight = 'none';
     
     this.events.emit('modal:close');
   }
@@ -70,13 +56,5 @@ export class ModalView extends View<void> {
 
   clearContent(): void {
     this._content.innerHTML = '';
-    this._content.style.overflowY = 'visible';
-    this._content.style.maxHeight = 'none';
-  }
-
-  private handleResize(): void {
-    setTimeout(() => {
-      this.events.emit('modal:resize');
-    }, 100);
   }
 }

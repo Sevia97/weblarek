@@ -1,8 +1,7 @@
 import { FormView } from './FormView';
-import { IBuyer } from '../../types';
 import { EventEmitter } from '../base/Events';
 
-export class OrderFormView extends FormView<IBuyer> {
+export class OrderFormView extends FormView {
   private _address: HTMLInputElement;
   private _paymentButtons: NodeListOf<HTMLButtonElement>;
 
@@ -21,8 +20,6 @@ export class OrderFormView extends FormView<IBuyer> {
     this._address.addEventListener('input', () => {
       this.handleInputChange();
     });
-
-    // Убираем автоматическую подписку на валидацию
   }
 
   private handlePaymentSelect(button: HTMLButtonElement): void {
@@ -40,31 +37,10 @@ export class OrderFormView extends FormView<IBuyer> {
     this.events.emit('order:change', { address: this._address.value });
   }
 
-  getFormData(): IBuyer {
-    const selectedPayment = this.container.querySelector('.button_alt-active') as HTMLButtonElement;
-    
-    let payment: 'online' | 'offline' | null = null;
-    if (selectedPayment) {
-      const buttonName = selectedPayment.getAttribute('name');
-      payment = buttonName === 'card' ? 'online' : buttonName === 'cash' ? 'offline' : null;
-    }
-    
-    return {
-      payment,
-      address: this._address.value,
-      email: '',
-      phone: ''
-    };
-  }
-
   protected setupSubmitHandler(): void {
     this._submitButton.addEventListener('click', (event: Event) => {
       event.preventDefault();
-      this.events.emit('order:submit', this.getFormData());
+      this.events.emit('order:submit');
     });
-  }
-
-  protected validate(): Record<string, string | undefined> {
-    return {};
   }
 }
