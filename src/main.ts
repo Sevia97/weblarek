@@ -93,7 +93,7 @@ events.on('item:selected', (data: { item: IProduct }) => {
 
 // Обработка событий корзины
 events.on('basket:changed', (data: { items: IProduct[] }) => {
-  cartView.setItems(data.items);
+  cartView.updateState(data.items); // ← ИЗМЕНИТЬ ЗДЕСЬ
   renderCartItems(data.items);
   cartView.setTotal(cartModel.getTotal());
   cartView.setSubmitDisabled(data.items.length === 0);

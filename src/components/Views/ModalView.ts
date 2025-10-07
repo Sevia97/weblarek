@@ -6,6 +6,7 @@ export class ModalView extends View<void> {
   private _content: HTMLElement;
   private _isOpen: boolean = false;
   protected events: EventEmitter;
+  private _handleKeydown: (event: KeyboardEvent) => void;
 
   constructor(container: HTMLElement, events: EventEmitter) {
     super(container);
@@ -13,6 +14,13 @@ export class ModalView extends View<void> {
     
     this._closeButton = this.ensureElement<HTMLButtonElement>('.modal__close');
     this._content = this.ensureElement<HTMLElement>('.modal__content');
+
+    // Сохраняем ссылку на обработчик для removeEventListener
+    this._handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && this._isOpen) {
+        this.close();
+      }
+    };
 
     this._closeButton.addEventListener('click', () => {
       this.close();
@@ -23,18 +31,14 @@ export class ModalView extends View<void> {
         this.close();
       }
     });
-
-    document.addEventListener('keydown', (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && this._isOpen) {
-        this.close();
-      }
-    });
   }
 
   open(): void {
     this.container.classList.add('modal_active');
     document.body.classList.add('modal-open');
     this._isOpen = true;
+    
+    document.addEventListener('keydown', this._handleKeydown);
     
     this.events.emit('modal:open');
   }
@@ -45,6 +49,8 @@ export class ModalView extends View<void> {
     this.container.classList.remove('modal_active');
     document.body.classList.remove('modal-open');
     this._isOpen = false;
+    
+    document.removeEventListener('keydown', this._handleKeydown);
     
     this.events.emit('modal:close');
   }

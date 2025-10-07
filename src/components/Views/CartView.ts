@@ -1,4 +1,3 @@
-// components/views/CartView.ts
 import { View } from './View';
 import { IProduct } from '../../types';
 import { EventEmitter } from '../base/Events';
@@ -25,9 +24,8 @@ export class CartView extends View<IProduct[]> {
     });
   }
 
-  setItems(items: IProduct[]): void {
+  updateState(items: IProduct[]): void {
     this._list.innerHTML = '';
-    
     
     if (items.length === 0) {
       if (this._emptyMessage) {
@@ -40,8 +38,6 @@ export class CartView extends View<IProduct[]> {
       }
       this.setSubmitDisabled(false);
     }
-    
-   
   }
 
   addCard(cardElement: HTMLElement): void {
